@@ -58,10 +58,10 @@ Metadata columns (message_id, message_reference_message_id, guild_id, channel_id
 
 Pipeline:
 
-1. **Trim & Strip**: normalize, remove emojis/mentions/junk, structural rejects → `trimmed.csv`
-2. **Slang Replacement**: conservative text slang mapping → `slangremoved.csv` (+ `changes.csv` log)
-3. **Smart Resample**: optional token-length bucketing/shuffle → `resampled.csv`
-4. **Double-Check**: ChatML alternation + `<|end_of_text|>` guard → `done.csv` (+ `invalid.csv`)
+1. **Trim & Strip**: normalize text, remove emojis/mentions/junk, drop structural spam (e.g., emoji floods, trade lists, code blocks) → `trimmed.csv`
+2. **Slang Replacement**: map common shorthand/slang into normalized forms (e.g., `u → you`), with all substitutions logged → `slangremoved.csv` (+ `changes.csv`)
+3. **Smart Resample**: group by token length, shuffle within buckets, and optionally trim to target size → `resampled.csv`
+4. **Double-Check**: enforce ChatML role alternation and `<|end_of_text|>` termination, rejecting malformed samples → `done.csv` (+ `invalid.csv`)
 
 **CLI**
 
@@ -89,7 +89,9 @@ python smartclean.py -f ALPHA
 
 ## `tos.py` — HF-ToS Risk Filter
 
-Drop or redact matches across one file **or a directory** of shards.
+Drop or redact matches across one CSV/Parquet file **or a directory of shards**.  
+Applies fuzzy/leet/diacritic-aware regex to remove or redact ToS-risk categories such as sexual violence, CSA, slurs, harassment, doxxing, self-harm, and extremism.  
+Works with adaptive chunking for CSV and row-group batching for Parquet, with multiprocessing and Rich progress built in.
 
 **CLI**
 
