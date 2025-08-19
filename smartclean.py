@@ -16,6 +16,19 @@ SmartClean — Advanced Dataset Cleaner (32GB-ready).
     4. Double-Check → structural & alternation validation
 - Outputs clean CSVs (and Parquet optional) with logs
 - Optimized defaults for 32GB RAM + good CPU, configurable via args
+
+Usage:
+    python smartclean.py -f ALPHA
+
+    # Expects:
+    #   /home/user/data/ALPHA/dump.csv
+    # Produces:
+    #   /home/user/data/ALPHA/trimmed.csv
+    #   /home/user/data/ALPHA/slangremoved.csv
+    #   /home/user/data/ALPHA/resampled.csv
+    #   /home/user/data/ALPHA/done.csv
+    #   /home/user/data/ALPHA/invalid.csv
+    #   /home/user/data/ALPHA/changes.csv
 """
 
 import os

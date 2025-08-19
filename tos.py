@@ -9,9 +9,20 @@ HF-ToS cleaner for text datasets (with fuzzy detection) — MP/Chunked (32GB-rea
 - Argparse for paths/columns/action/batch size/workers/memory
 - Broad ToS-risk filters (sexual violence, slurs, CSA, terrorism, doxxing, self-harm, etc.)
 - Drop OR Redact (default drop)
-- Unicode NFKC + leetspeak folding + fuzzy regex
+- Unicode NFKC normalization, leetspeak folding + fuzzy regex
 - Outputs CSV or Parquet based on --out
+
+Usage:
+    # Drop risky rows from CSV
+    python tos.py -p data/dump.csv -o out/clean.csv --action drop
+
+    # Redact risky spans to [REDACTED] and write Parquet
+    python tos.py -p data/dump.csv -o out/clean.parquet --action redact
+
+    # Process directory of shards with explicit chunk size
+    python tos.py -p data/shards -o out/clean.csv --chunksize 120000
 """
+
 
 import os
 import sys
