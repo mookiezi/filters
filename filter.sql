@@ -1,7 +1,7 @@
 /*
 SQL Filter Script for Dataset Cleaning — Batch-Ready (32GB-optimized).
 
-- Defines regex filters for ToS-risk categories (sexual violence, slurs, CSA, terrorism, doxxing, self-harm, etc.)
+- Defines regex filters for PII, bot/command patterns, and automation noise
 - Designed for integration with Python/ETL pipelines
 - Matches and removes/rejects risky or unwanted rows
 - Optimized for large-scale text datasets
@@ -9,7 +9,14 @@ SQL Filter Script for Dataset Cleaning — Batch-Ready (32GB-optimized).
 - Extendable with additional patterns
 
 Usage:
-    psql -f filter.sql
+    # Run against a loaded table (example: messages)
+    psql -d mydb -f filter.sql
+
+    # Or include in a query
+    SELECT * FROM messages
+    WHERE NOT (content ~* ANY(ARRAY[
+        -- patterns defined in filter.sql
+    ]));
 */
 
 -- Drop old filter_me and partitions
