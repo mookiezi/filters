@@ -1,1 +1,165 @@
-# filters
+# Discord Dataset Cleaning Toolkit
+
+Three complementary cleaners for high-volume text datasets with **Rich** progress, **multiprocessing**, and **32 GB-RAM-friendly** batching:
+
+-   `tos.py` — HF-ToS risk filter (drop or redact).
+-   `smartclean.py` — multi-stage “smart clean” (normalize → slang replace → length-bucket resample → structural double-check).
+-   `filter.sql` — standalone Postgres SQL filter set for ToS-risk categories.
+
+## Features
+
+-   **Fast & Scalable:** Multiprocessing over CSV chunks or Parquet row groups, tuned for 32 GB RAM + good CPU.
+-   **Rich UI:** progress bars, ETA, throughput, counters.
+-   **Robust Filters:** fuzzy/leet/diacritic-aware regex for ToS risk; structural heuristics for bot-like or list/code spam.
+-   **CSV/Parquet I/O:** adaptive CSV chunking; Parquet via `pyarrow` with zstd compression.
+-   **Windows/Unix friendly:** shebang helps Unix (`./script.py`); Windows runs `python script.py`.
+-   **SQL Integration:** `filter.sql` provides regex patterns for direct use in Postgres pipelines.
+
+---
+
+## Install
+
+```bash
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -U pip
+pip install -r requirements.txt
+```
+
+> Python **3.10+** recommended.
+
+---
+
+## `filter.sql` — SQL Filters
+
+A Postgres-compatible SQL file containing regex/text filters for PII, bot/command patterns, and automation noise.
+
+Usage:
+
+```bash
+# Run against a loaded table (example: messages)
+psql -d mydb -f filter.sql
+
+# Or include in a query
+SELECT * FROM messages
+WHERE NOT (content ~* ANY(ARRAY[
+    -- patterns defined in filter.sql
+]));
+```
+
+The script expects:
+
+```
+A Postgres table containing your dataset (e.g., messages).
+A text column (content) that holds the message text.
+Metadata columns (message_id, message_reference_message_id, guild_id, channel_id, author_id)
+```
+
+## `smartclean.py` — Multi-Stage Smart Clean
+
+Pipeline:
+
+1. **Trim & Strip**: normalize, remove emojis/mentions/junk, structural rejects → `trimmed.csv`
+2. **Slang Replacement**: conservative text slang mapping → `slangremoved.csv` (+ `changes.csv` log)
+3. **Smart Resample**: optional token-length bucketing/shuffle → `resampled.csv`
+4. **Double-Check**: ChatML alternation + `<|end_of_text|>` guard → `done.csv` (+ `invalid.csv`)
+
+**CLI**
+
+```text
+-f/--folder            Required folder name under /home/user/data/{folder}
+```
+
+The script expects:
+
+```
+/home/user/data/{folder}/dump.csv           # input
+/home/user/data/{folder}/trimmed.csv        # stage 1 output
+/home/user/data/{folder}/slangremoved.csv   # stage 2 output
+/home/user/data/{folder}/resampled.csv      # stage 3 output
+/home/user/data/{folder}/done.csv           # final valid
+/home/user/data/{folder}/invalid.csv        # reasons for rejects
+/home/user/data/{folder}/changes.csv        # slang replacements log
+```
+
+**Example**
+
+```bash
+python smartclean.py -f ALPHA
+```
+
+## `tos.py` — HF-ToS Risk Filter
+
+Drop or redact matches across one file **or a directory** of shards.
+
+**CLI**
+
+```text
+-p/--in                Input CSV/Parquet file OR directory
+-o/--out               Output path (.csv or .parquet)
+--cols                 Optional list of text columns to scan (auto-detect if omitted)
+--action               drop | redact (default: drop)
+--workers              Processes (default: all cores)
+--target-mem-gb        Approx total RAM budget (guides CSV chunking) [default: 32]
+--chunksize            Override adaptive CSV rows/chunk
+--parquet-rg-batch     Parquet row-groups per pool batch [default: 16]
+```
+
+**Examples**
+
+```bash
+# Drop risky rows from a CSV
+python tos.py -p data/dump.csv -o out/clean.csv --action drop
+
+# Redact risky spans into [REDACTED] and write Parquet
+python tos.py -p data/dump.csv -o out/clean.parquet --action redact
+
+# Process a folder of shards with explicit chunk size
+python tos.py -p data/shards -o out/clean.csv --chunksize 120000
+```
+
+---
+
+## Cross-Platform Notes
+
+-   **Unix/macOS**: after `chmod +x script.py`, you can run `./script.py …` thanks to the shebang.
+-   **Windows**: run as `python script.py …`; shebang is ignored by default shell, but code is fully supported.
+
+---
+
+## Performance Tips
+
+-   **CSV**: let the adaptive chunker size rows from your `--target-mem-gb`; override with `--chunksize` if needed (in `tos.py`).
+-   **Parquet**: tune `--parquet-rg-batch` to balance CPU vs. memory (in `tos.py`).
+-   Keep output on a fast disk (NVMe) to avoid I/O bottlenecks.
+
+---
+
+## Outputs & Logs
+
+-   `tos.py` prints kept/processed counts and rate.
+-   `smartclean.py` emits stage artifacts and logs:
+    -   `changes.csv`: slang replacements (row, column, original, cleaned)
+    -   `invalid.csv`: structural reasons for rejection
+
+---
+
+## License
+
+MIT
+
+---
+
+## Quick Start
+
+```bash
+# 1) Install
+pip install -r requirements.txt
+
+# 2) Run SmartClean pipeline
+python smartclean.py -f ALPHA
+
+# 3) Run ToS cleaner
+python tos.py -p data/dump.csv -o out/clean.parquet --action drop
+
+```
