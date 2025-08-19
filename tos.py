@@ -23,7 +23,6 @@ Usage:
     python tos.py -p data/shards -o out/clean.csv --chunksize 120000
 """
 
-
 import os
 import sys
 import re
