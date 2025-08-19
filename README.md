@@ -10,10 +10,9 @@ Three complementary cleaners for high-volume text datasets with **Rich** progres
 
 -   **Fast & Scalable:** Multiprocessing over CSV chunks or Parquet row groups, tuned for 32 GB RAM + good CPU.
 -   **Rich UI:** progress bars, ETA, throughput, counters.
--   **Robust Filters:** fuzzy/leet/diacritic-aware regex for ToS risk; structural heuristics for bot-like or list/code spam.
--   **CSV/Parquet I/O:** adaptive CSV chunking; Parquet via `pyarrow` with zstd compression.
+-   **Robust Filters:** fuzzy/leet/diacritic-aware regex for ToS risk, structural heuristics for bot-like or list/code spam, and Postgres-compatible regex patterns for PII, commands, and automation noise.
+-   **CSV/Parquet I/O:** adaptive CSV chunking; Parquet via `pyarrow` with zstd compression, with SQL filters usable directly in Postgres pipelines.
 -   **Windows/Unix friendly:** shebang helps Unix (`./script.py`); Windows runs `python script.py`.
--   **SQL Integration:** `filter.sql` provides regex patterns for direct use in Postgres pipelines.
 
 ---
 
