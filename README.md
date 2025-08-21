@@ -225,14 +225,6 @@ python tos.py -p data/shards -o out/clean.csv --chunksize 120000
 
 ---
 
-## Performance Tips
-
--   **CSV**: let the adaptive chunker size rows from your `--target-mem-gb`; override with `--chunksize` if needed (in `tos.py`).
--   **Parquet**: tune `--parquet-rg-batch` to balance CPU vs. memory (in `tos.py`).
--   Keep output on a fast disk (NVMe) to avoid I/O bottlenecks.
-
----
-
 ## Outputs & Logs
 
 -   `tos.py` prints kept/processed counts and rate.
