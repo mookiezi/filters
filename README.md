@@ -87,6 +87,51 @@ The script expects:
 python smartclean.py -f ALPHA
 ```
 
+## `fixend.py` — Normalize `<|im_end|>` prefixes
+
+Pipeline:
+
+1. **Normalize token**: in the CSV `text` column, coollapse any prefix of spaces, commas, or non-emoticon colons before `<|im_end|>` to the bare token → writes `*_fixed.csv`. Blocks the change if the closest colon is “guarded” by a preceding symbol or one of `0 o O d D V v x X c C`, allowing whitespace between the guard and the colon. Uses streaming, batching, and optional multiprocessing for large files.
+
+**Rules**
+
+-   Replace: `([,\s:]+)<|im_end|>` → `<|im_end|>`
+-   **Block** replacement if the nearest `:` before the token has a non-alphanumeric character right before it, or one of `0/o/O/d/D/V/v/x/X/c/C` (whitespace between guard and `:` allowed). Otherwise, normalize.
+
+**CLI**
+
+```text
+-p/--path            Input CSV path (required)
+-o/--out             Output CSV path (default: <input>_fixed.csv)
+-tc/--text-col       Text column name (default: text)
+-bs/--batch-size     Rows per batch (default: 100000)
+-w/--workers         Process workers (0=auto→single process; 1=force single)
+--delimiter          CSV delimiter (default: ,)
+--quotechar          CSV quote char (default: ")
+--no-count-first     Skip pre-count pass for ETA
+```
+
+The script expects:
+
+```
+/path/to/input_csv.csv          # input
+/path/to/output_csv.csv         # output (default name)
+```
+
+**Example**
+
+```bash
+python fixend.py -p /home/user/data/in.csv
+# -> /home/user/data/in_fixed.csv
+```
+
+**Notes**
+
+-   Only the specified text column is modified; all other fields are preserved.
+-   Rich progress bar with elapsed/remaining time; optional pre-count for ETA.
+-   Single-process by default to minimize overhead; enable procs with `-w > 1`.
+-   Atomic write via `*.tmp` then replace.
+
 ## `tos.py` — HF-ToS Risk Filter
 
 Drop or redact matches across one CSV/Parquet file **or a directory of shards**.  

@@ -685,7 +685,7 @@ def normalize_spacing(text):
     # collapse multiple spaces into one (but preserve newlines/tabs/etc.)
     text = re.sub(r' {2,}', ' ', text)
     # remove space before punctuation (only , . ! ? ; :)
-    text = re.sub(r' ([.,!?;:])', r'\1', text)
+    text = re.sub(r' ([.,!?;])', r'\1', text)
     return text.strip()
 
 def strip_hash_and_angle(text):
