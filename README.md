@@ -1,7 +1,7 @@
 # Discord Dataset Cleaning Toolkit
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/mookiezi/site/refs/heads/main/filt_banner_sm.png" alt="Dataset Cleaning Toolkit">
+  <img src="https://raw.githubusercontent.com/mookiezi/site/refs/heads/main/filt_header_sm.png" alt="Dataset Cleaning Toolkit">
 </p>
 
 Three complementary cleaners for high-volume text datasets with **Rich** progress, **multiprocessing**, and **32 GB-RAM-friendly** batching:
