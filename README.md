@@ -1,5 +1,7 @@
 # Discord Dataset Cleaning Toolkit
 
+![Dataset Cleaning Toolkit](https://raw.githubusercontent.com/mookiezi/site/refs/heads/main/filters.png)
+
 Three complementary cleaners for high-volume text datasets with **Rich** progress, **multiprocessing**, and **32 GB-RAM-friendly** batching:
 
 -   `tos.py` — HF-ToS risk filter (drop or redact).
