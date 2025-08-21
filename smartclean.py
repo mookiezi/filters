@@ -789,7 +789,7 @@ def filter_wrapper(batch_offset_and_index):
 
 def trim_and_strip():
     try:
-        print(f"📂 Opening and writing to: {TRIMMED_CSV}")
+        print(f"Opening and writing to: {TRIMMED_CSV}")
         with open(INPUT_CSV, newline='', encoding='utf-8') as f:
             total = sum(1 for _ in csv.reader(f)) - 1
 
