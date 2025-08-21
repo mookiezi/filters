@@ -55,8 +55,9 @@ parser = argparse.ArgumentParser(description="Smart clean filtering system")
 parser.add_argument("-f", "--folder", required=True, help="folder to CSV file")
 args = parser.parse_args()
 
-# === Config ===
+# === Tokenizer ===
 tokenizer = AutoTokenizer.from_pretrained("NousResearch/Hermes-3-Llama-3.1-8B", use_fast=True)
+
 INPUT_CSV = f"/home/user/data/{args.folder}/dump.csv"
 TRIMMED_CSV = f"/home/user/data/{args.folder}/trimmed.csv"
 BAD_ROWS_CSV = f"/home/user/data/{args.folder}/bad.csv"
@@ -224,7 +225,6 @@ def strip_emojis(text):
         text = text.replace(match["emoji"], "")
     return text
 
-# Sort replacements by descending pattern length
 sorted_slang = sorted(slang_map.items(), key=lambda x: -len(x[0]))
 
 def replace_slang(text):
@@ -292,18 +292,14 @@ def strip_at_mentions(text):
     """
     if not text:
         return text
-    # Regex: '@' + non-whitespace, non-@ run + optional whitespace (but not across lines)
     return re.sub(r'@\S+\s*', '', text)
 
 def clean_commas_and_periods(text):
-    # Rule 1: Change "., " → ", "
     text = re.sub(r'\.\s*,', ',', text)
     text = re.sub(r'\.,', ',', text)
 
-    # Rule 2: Change ",." → "."
     text = re.sub(r',\.', '.', text)
 
-    # Rule 3: Collapse multiple commas → one comma
     text = re.sub(r',{2,}', ',', text)
 
     return text
@@ -390,7 +386,6 @@ def doublecheck_is_valid(indexed_row):
     if not turns:
         return False, f"{idx}: no valid chat turns found — {short}"
 
-    # Allow either role to start, but require strict alternation from the first role
     first = turns[0][0]
     if first not in ("user", "assistant"):
         return False, f"{idx}: first speaker must be user or assistant — {short}"
@@ -505,7 +500,6 @@ def doublecheck_final_pass():
     print(f"Invalid rows:  {len(invalid_rows):,}")
     print(f"Valid percent:  {len(valid_rows) / len(rows_check) * 100:.2f}%")
 
-    # Write valid rows
     with open(DOUBLECHECK_OUTPUT_CSV, "w", newline='', encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(header)
@@ -513,7 +507,6 @@ def doublecheck_final_pass():
             writer.writerow([str(row.get(col, "")) for col in header])
     print(f"Cleaned CSV saved to: {DOUBLECHECK_OUTPUT_CSV}")
 
-    # Write invalid rows with reason
     if invalid_rows:
         bad_header = ["reason"] + header
         with open(DOUBLECHECK_LOG_PATH, "w", newline='', encoding="utf-8") as f:
@@ -593,7 +586,6 @@ def show_mem(label=""):
 def is_lf_trade_hint(text):
     if not text:
         return False
-    # match standalone 'lf', 'lf:', 'lf1', 'lf123' etc., but not 'alfredo', 'selfish', etc.
     return bool(LF_TRADE_HINT_RE.search(text))
 
 def is_card_trade_post(text):
@@ -615,7 +607,7 @@ def _is_bullety(text):
     if not text:
         return False
     lines = text.strip().splitlines()
-    if len(lines) <= 2:  # safe exemption for RP messages
+    if len(lines) <= 2:
         return False
     bullet_lines = sum(1 for l in lines if BULLET_LINE_RE.match(l))
     return bullet_lines / len(lines) >= 0.5
@@ -672,11 +664,8 @@ def strip_flower_and_trailing_colon(text):
     """
     if not text:
         return text
-    # Remove all '🥀'
     text = text.replace("🥀", "")
-    # Remove all ':' at end of lines (including if space before colon)
     text = re.sub(r':[ \t]*$', '', text, flags=re.MULTILINE)
-    # Remove all starting '.' or ',' on each line (optionally preceded by whitespace)
     text = re.sub(r'^[ \t]*[.,]+', '', text, flags=re.MULTILINE)
 
     return text
@@ -697,16 +686,13 @@ def strip_hash_and_angle(text):
         return text
 
     def clean_block(msg):
-        # Remove all # at start of each line
         msg = re.sub(r'^[#]+', '', msg, flags=re.MULTILINE)
-        # Strip all < and > from this block
         return msg.replace('<', '').replace('>', '')
 
     cleaned_blocks = []
     for role, msg in extract_chat_turns(text):
         cleaned_blocks.append(f"<|im_start|>{role}\n{clean_block(msg)}<|im_end|>")
 
-    # Keep <|end_of_text|> if present
     if text.strip().endswith("<|end_of_text|>"):
         return "\n".join(cleaned_blocks) + "<|end_of_text|>"
     return "".join(cleaned_blocks)
@@ -731,9 +717,8 @@ def filter_rows_batch(rows, row_offset, text_index):
         if not text:
             continue
 
-        row[text_index] = text  # update cleaned text
+        row[text_index] = text
 
-        # filtering
         rejected = None
         if is_card_trade_post(text):
             rejected = "CARD_TRADE"
@@ -777,7 +762,6 @@ def filter_rows_batch(rows, row_offset, text_index):
         else:
             good_rows.append(row)
 
-    # token length cutoff
     accepted = []
     try:
         encodings = tokenizer([r[text_index] for r in good_rows], add_special_tokens=True, truncation=False)

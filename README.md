@@ -87,6 +87,36 @@ The script expects:
 python smartclean.py -f ALPHA
 ```
 
+## `dedupe.py` — ChatML Deduplication
+
+Stream-deduplicate ChatML-formatted rows in a CSV.
+Parses messages between `<|im_start|>` and `<|im_end|>`, hashes full chains, and drops duplicates.
+When duplicates differ only in their final assistant message, the version with the longest tokenized ending is kept.
+Uses Polars streaming, multiprocessing, and Rich progress for efficient large-scale processing.
+
+**CLI**
+
+```text
+-p/--path              Input CSV file (required, must contain `text` column)
+```
+
+**This script expects**
+
+```
+/path/to/input.csv               # input file with ChatML rows
+/path/to/input_deduped.csv       # output deduplicated CSV
+```
+
+**Examples**
+
+```bash
+# Deduplicate a single CSV of ChatML conversations
+python dedupe.py -p data/dump.csv
+
+# Input: data/dump.csv
+# Output: data/dump_deduped.csv
+```
+
 ## `fixend.py` — Normalize `<|im_end|>` prefixes
 
 Pipeline:
@@ -149,6 +179,24 @@ Works with adaptive chunking for CSV and row-group batching for Parquet, with mu
 --target-mem-gb        Approx total RAM budget (guides CSV chunking) [default: 32]
 --chunksize            Override adaptive CSV rows/chunk
 --parquet-rg-batch     Parquet row-groups per pool batch [default: 16]
+```
+
+**This script expects**
+
+```
+# If -p/--in is a single file
+/path/to/dump.csv            # OR dump.parquet
+/path/to/out/clean.csv       # OR clean.parquet (single consolidated output)
+```
+
+```
+# If -p/--in is a directory
+/path/to/shards/             # folder containing any mix of:
+  *.parquet                  # processed by row-groups
+  *.csv                      # processed by adaptive CSV chunks
+
+# Output is ONE file at -o/--out:
+out/clean.csv                # OR out/clean.parquet
 ```
 
 **Examples**
