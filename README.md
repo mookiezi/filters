@@ -115,43 +115,39 @@ python dedupe.py -p data/dump.csv
 # Output: data/dump_deduped.csv
 ```
 
-## `fixend.py` — Normalize `<|im_end|>` prefixes
+## `fixend.py` — Normalize `<|im_end|>` Prefixes
 
-Normalizes tokens in the CSV `text` column, collapsing any prefix of spaces, commas, or non-emoticon colons before `<|im_end|>` to the bare token → writes `*_fixed.csv`. Blocks the change if the closest colon is “guarded” by a preceding symbol or one of `0 o O d D V v x X c C`, allowing whitespace between the guard and the colon. Uses streaming, batching, and optional multiprocessing for large files.
+Stream-normalizes the `text` column of a CSV by collapsing any prefix of spaces, commas, or non-emoticon colons before `<|im_end|>` into the bare token → writes `*_fixed.csv`. Replacement is **blocked** if the closest colon is “guarded” by a preceding symbol or one of `0 o O d D V v x X c C` (whitespace between guard and colon allowed). Uses streaming, batching, and optional multiprocessing for large files.
 
 **CLI**
 
 ```text
--p/--path            Input CSV path (required)
--o/--out             Output CSV path (default: <input>_fixed.csv)
--tc/--text-col       Text column name (default: text)
--bs/--batch-size     Rows per batch (default: 100000)
--w/--workers         Process workers (0=auto→single process; 1=force single)
---delimiter          CSV delimiter (default: ,)
---quotechar          CSV quote char (default: ")
---no-count-first     Skip pre-count pass for ETA
+-p/--path              Input CSV path (required)
+-o/--out               Output CSV path (default: <input>_fixed.csv)
+-tc/--text-col         Text column name (default: text)
+-bs/--batch-size       Rows per batch (default: 100000)
+-w/--workers           Process workers (0=auto→single process; 1=force single)
+--delimiter            CSV delimiter (default: ,)
+--quotechar            CSV quote char (default: ")
+--no-count-first       Skip pre-count pass for ETA
 ```
 
-The script expects:
+**This script expects**
 
 ```
-/path/to/input_csv.csv          # input
-/path/to/output_csv.csv         # output (default name)
+/path/to/input.csv             # input file with ChatML rows
+/path/to/input_fixed.csv        # output normalized CSV (default name)
 ```
 
-**Example**
+**Examples**
 
 ```bash
-python fixend.py -p /home/user/data/in.csv
-# -> /home/user/data/in_fixed.csv
+# Normalize <|im_end|> tokens in a CSV
+python fixend.py -p data/dump.csv
+
+# Custom output path
+python fixend.py -p data/dump.csv -o out/normalized.csv
 ```
-
-**Notes**
-
--   Only the specified text column is modified; all other fields are preserved.
--   Rich progress bar with elapsed/remaining time; optional pre-count for ETA.
--   Single-process by default to minimize overhead; enable procs with `-w > 1`.
--   Atomic write via `*.tmp` then replace.
 
 ## `tos.py` — HF-ToS Risk Filter
 
