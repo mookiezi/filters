@@ -4,19 +4,13 @@
   <img src="https://raw.githubusercontent.com/mookiezi/site/refs/heads/main/filt_header_sm.png" alt="Dataset Cleaning Toolkit">
 </p>
 
-Three complementary cleaners for high-volume text datasets with **Rich** progress, **multiprocessing**, and **32 GB-RAM-friendly** batching:
+A comprehensive toolkit of five complementary cleaners for large-scale text datasets with **Rich** progress, **multiprocessing**, and **32 GB-RAM-friendly** batching:
 
--   `tos.py` — HF-ToS risk filter (drop or redact).
--   `smartclean.py` — multi-stage “smart clean” (normalize → slang replace → length-bucket resample → structural double-check).
--   `filter.sql` — standalone Postgres SQL filter set for ToS-risk categories.
-
-## Features
-
--   **Fast & Scalable:** Multiprocessing over CSV chunks or Parquet row groups, tuned for 32 GB RAM + good CPU.
--   **Rich UI:** progress bars, ETA, throughput, counters.
--   **Robust Filters:** fuzzy/leet/diacritic-aware regex for ToS risk, structural heuristics for bot-like or list/code spam, and Postgres-compatible regex patterns for PII, commands, and automation noise.
--   **CSV/Parquet I/O:** adaptive CSV chunking; Parquet via `pyarrow` with zstd compression, with SQL filters usable directly in Postgres pipelines.
--   **Windows/Unix friendly:** shebang helps Unix (`./script.py`); Windows runs `python script.py`.
+-   `filter.sql` — Postgres filter set (PII, commands, automation noise, ToS-risk).
+-   `smartclean.py` — multi-stage smart clean (normalize → slang replace → resample → structural double-check).
+-   `tos.py` — HF-ToS risk filter (drop or redact fuzzy/leet/diacritic matches).
+-   `dedupe.py` — ChatML deduplication (drop duplicate chains, keep longest assistant ending).
+-   `fixend.py` — normalize stray prefixes before `<|im_end|>` (collapse/guarded colon rules).
 
 ---
 
