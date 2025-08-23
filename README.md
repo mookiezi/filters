@@ -219,6 +219,7 @@ python tos.py -p data/shards -o out/clean.csv --chunksize 120000
 
 ## License
 
-MIT
+This project is licensed under the **MIT License**.  
+See the [LICENSE](LICENSE) file for details.
 
 ---
