@@ -229,10 +229,19 @@ MIT
 # 1) Install
 pip install -r requirements.txt
 
-# 2) Run SmartClean pipeline
+# 2) Run SmartClean pipeline (multi-stage normalize → slang replace → resample → double-check)
 python smartclean.py -f ALPHA
 
-# 3) Run ToS cleaner
+# 3) Run ToS cleaner (drop or redact ToS-risk rows from CSV/Parquet)
 python tos.py -p data/dump.csv -o out/clean.parquet --action drop
+
+# 4) Run Deduper (remove duplicate ChatML chains, keep longest assistant ending)
+python dedupe.py -p out/clean.parquet
+
+# 5) Run FixEnd (normalize stray prefixes before <|im_end|>)
+python fixend.py -p out/clean_deduped.csv -o out/clean_deduped_fixed.csv
+
+# 6) Run SQL filter directly in Postgres (drop PII, commands, bot/automation noise)
+psql -d mydb -f filter.sql
 
 ```
