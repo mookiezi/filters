@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/mookiezi/site/refs/heads/main/filt_header_sm.png" alt="Dataset Cleaning Toolkit">
 </p>
 
-A comprehensive toolkit of five complementary cleaners for large-scale text datasets with **Rich** progress, **multiprocessing**, and **32 GB-RAM-friendly** batching:
+A comprehensive toolkit of five complementary cleaners for large-scale text datasets with Rich progress, multiprocessing, and 32 GB-RAM-friendly batching:
 
 -   `filter.sql` — Postgres filter set (PII, commands, automation noise, ToS-risk).
 -   `smartclean.py` — multi-stage smart clean (normalize → slang replace → resample → structural double-check).
