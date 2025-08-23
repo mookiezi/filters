@@ -117,14 +117,7 @@ python dedupe.py -p data/dump.csv
 
 ## `fixend.py` — Normalize `<|im_end|>` prefixes
 
-Pipeline:
-
-1. **Normalize token**: in the CSV `text` column, coollapse any prefix of spaces, commas, or non-emoticon colons before `<|im_end|>` to the bare token → writes `*_fixed.csv`. Blocks the change if the closest colon is “guarded” by a preceding symbol or one of `0 o O d D V v x X c C`, allowing whitespace between the guard and the colon. Uses streaming, batching, and optional multiprocessing for large files.
-
-**Rules**
-
--   Replace: `([,\s:]+)<|im_end|>` → `<|im_end|>`
--   **Block** replacement if the nearest `:` before the token has a non-alphanumeric character right before it, or one of `0/o/O/d/D/V/v/x/X/c/C` (whitespace between guard and `:` allowed). Otherwise, normalize.
+Normalizes tokens in the CSV `text` column, collapsing any prefix of spaces, commas, or non-emoticon colons before `<|im_end|>` to the bare token → writes `*_fixed.csv`. Blocks the change if the closest colon is “guarded” by a preceding symbol or one of `0 o O d D V v x X c C`, allowing whitespace between the guard and the colon. Uses streaming, batching, and optional multiprocessing for large files.
 
 **CLI**
 
