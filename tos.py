@@ -9,23 +9,13 @@ HF-ToS cleaner for text datasets (with fuzzy detection) — MP/Chunked (32GB-rea
 - Argparse for paths/columns/action/batch size/workers/memory
 - Broad ToS-risk filters (sexual violence, slurs, CSA, terrorism, doxxing, self-harm, etc.)
 - Drop OR Redact (default drop)
-- Unicode NFKC normalization, leetspeak folding + fuzzy regex
+- Unicode NFKC + leetspeak folding + fuzzy regex
 - Outputs CSV or Parquet based on --out
-
-Usage:
-    # Drop risky rows from CSV
-    python tos.py -p data/dump.csv -o out/clean.csv --action drop
-
-    # Redact risky spans to [REDACTED] and write Parquet
-    python tos.py -p data/dump.csv -o out/clean.parquet --action redact
-
-    # Process directory of shards with explicit chunk size
-    python tos.py -p data/shards -o out/clean.csv --chunksize 120000
 """
 
 import os
 import sys
-import re
+import regex as re
 import argparse
 import math
 import signal
@@ -44,6 +34,7 @@ console = Console()
 
 # -------- Configurable defaults --------
 DEFAULT_BATCH = 50_000
+REPEAT_MAX = 100
 DEFAULT_TEXT_COLS = ["text", "content", "message"]
 REDACTION_TOKEN = "[REDACTED]"
 
@@ -105,20 +96,29 @@ def cls(ch: str) -> str:
 
 # Convert a token -> fuzzy class sequence, allowing junk between letters
 def fuzz_token(token: str, gap=r"[\W_]{0,3}") -> str:
+    """
+    Returns a fuzzy regex that matches the token with optional junk between letters,
+    allowing each letter's class to repeat up to REPEAT_MAX times (to catch elongations).
+    Two-char composites in F (e.g., "vv", "cl") are kept atomic.
+    """
     parts = []
     i = 0
     while i < len(token):
-        # permit two-char composites defined in map (e.g., 'vv' fake 'w')
         two = token[i:i+2].lower()
         if two in F:
-            parts.append(cls(two))
+            unit = cls(two)
+            # Allow the composite to elongate by repeating itself (rare but possible)
+            parts.append(f"{unit}(?:{gap}?{unit}){{0,{REPEAT_MAX}}}+")
             i += 2
-            if i < len(token): parts.append(gap)
-            continue
-        ch = token[i]
-        parts.append(cls(ch))
-        i += 1
-        if i < len(token): parts.append(gap)
+        else:
+            ch = token[i]
+            unit = cls(ch)
+            # Allow this character class to repeat with optional noise between repeats
+            parts.append(f"{unit}(?:{gap}?{unit}){{0,{REPEAT_MAX}}}+")
+            i += 1
+        # After this letter (or composite), allow inter-letter junk before next unit
+        if i < len(token):
+            parts.append(gap)
     return "".join(parts)
 
 # Build alternatives from words/phrases
@@ -131,7 +131,7 @@ def any_of(words, gap=r"[\W_]{0,3}", wb=False):
         else:
             pat = fuzz_token(w, gap)
             # allow optional plural "s" (fuzzy class for s)
-            pat = f"{pat}{cls('s')}?"
+            pat = f"{pat}(?:{cls('s')}|{cls('z')})?"
         alts.append(pat)
     body = "(?:" + "|".join(alts) + ")"
     return (r"\b" + body + r"\b") if wb else body
@@ -148,7 +148,7 @@ any_of(["child porn", "child abuse", "child molest", "child groom", "child diddl
     + any_of(["cp", "loli", "shota", "minor sexual", "under age sex"], wb=False)
 )
 SEVERE_SLURS = any_of([
-    "nigger", "faggot", "fag", "fagot", "kike", "spic", "chink", "tranny", "retard", "retarded", "niglet", "nigglet", "niger",  "jew"
+    "nigger", "faggot", "fag", "fagot", "kike", "spic", "chink", "tranny", "retard", "retarded", "niglet", "nigglet", "niger",  "jew", "nigga", "nig", "nigg", "niglet", "nigglet"
 ])
 EXTREME_HARASS = any_of([
     "kill yourself", "kill youreself", "kill your", "kills your", "kill youre", "kys", "gas the jews", "gas the gays", "genocide", "lynch", "i'll kill you", "i'm going to hurt you", "swat you", "ill kill you", "im going to hurt you", "swat you", "address", "phone number"
